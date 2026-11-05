@@ -46,14 +46,7 @@ export function upgradeCatalog(state){
   state.modules=orderedModules(state.modules);return true;
 }
 export function splitTags(text){return [...new Set(String(text).split(/[,，、;；\n]+/).map(t=>t.trim()).filter(Boolean))];}
-export function splitOCR(text,alphabet='ABCD'){
-  const normalized=String(text).normalize('NFKC').replace(/\r/g,'');const options=Object.fromEntries([...alphabet].map(l=>[l,'']));
-  const re=new RegExp('(?:^|\\n|[ \\t]+)(['+alphabet+'])[.、:：)）]\\s*','g');let next=0;
-  const marks=[...normalized.matchAll(re)].filter(m=>{if(m[1]===alphabet[next]){next++;return true;}return false;});
-  if(!marks.length)return {stem:normalized.trim(),options};
-  marks.forEach((m,i)=>options[m[1]]=normalized.slice(m.index+m[0].length,marks[i+1]?.index??normalized.length).trim());
-  return {stem:normalized.slice(0,marks[0].index).trim(),options};
-}
+export {splitOCR} from './ocr-text.js';
 export function questionsFor(s,paperId){return s.questions.filter(q=>q.paperId===paperId&&!q.removed).sort((a,b)=>a.number-b.number);}
 export function attemptsFor(s,paperId){return s.attempts.filter(a=>a.paperId===paperId).sort((a,b)=>b.date.localeCompare(a.date)||b.updatedAt.localeCompare(a.updatedAt));}
 export function sourceOf(s,q){const p=s.papers.find(p=>p.id===q.paperId);return {name:p?.name||q.source.paperName,date:q.source.date,number:q.number,module:named(s,'modules',q.moduleId),deleted:!p,removed:q.removed};}
