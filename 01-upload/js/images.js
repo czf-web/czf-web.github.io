@@ -1,0 +1,7 @@
+import {uid,stamp} from './model.js';
+export const IMAGE_TYPES=['image/png','image/jpeg','image/webp','image/gif','image/bmp'];
+export async function hashBlob(blob){const digest=await crypto.subtle.digest('SHA-256',await blob.arrayBuffer());return [...new Uint8Array(digest)].map(n=>n.toString(16).padStart(2,'0')).join('');}
+export async function prepareImage(file){if(!IMAGE_TYPES.includes(file.type))throw Error(`${file.name||'图片'}：仅支持 PNG/JPEG/WebP/GIF/BMP`);if(file.size>20*1024*1024)throw Error('每张图片请小于 20 MB');return {id:uid(),name:file.name||'截图.png',type:file.type,hash:await hashBlob(file),data:file,updatedAt:stamp()};}
+export function addImage(s,image){const existing=s.images.find(i=>i.hash===image.hash);if(existing)return existing.id;s.images.push(image);return image.id;}
+export const blobToURL=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob);});
+export async function decodeImage(image){if(typeof image.data!=='string'||!/^data:image\/(png|jpeg|webp|gif|bmp);base64,[A-Za-z0-9+/=\r\n]+$/.test(image.data))throw Error('备份图片 data URL 无效');const [head,body]=image.data.split(','),type=head.slice(5,head.indexOf(';'));const data=new Blob([Uint8Array.from(atob(body),c=>c.charCodeAt(0))],{type});if(await hashBlob(data)!==image.hash)throw Error(`图片 ${image.name} 哈希不一致`);return {...image,type,data};}
